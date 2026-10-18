@@ -1,0 +1,255 @@
+{
+  "method": "2-D finite-volume base conduction + analytical fins + lumped copper/package.\n\nTemperatures are scenario predictions, not measured/validated RTX3060 temperatures.\nThe underside is adiabatic except for copper input. Uniform prescribed h applies\non uncovered top, base perimeter and fin sides/tips; fin end faces are omitted.\nFins have quasi-steady efficiency but their full mass is lumped at local base\nnodes for transient storage. Copper is isothermal. Holes are omitted in the\nthermal grid (their exact volume is reported separately). No CFD or heat pipes.\n",
+  "parameters": {
+    "study": {
+      "title": "Gemeo digital termico de um dissipador para GPU",
+      "author": "Nicolas Melo",
+      "institution": "Centro Universitario de Brasilia (CEUB)",
+      "course": "Fundamentos de Engenharia",
+      "date": "2026-10-18",
+      "reference_gpu": "MSI GeForce RTX 3060 VENTUS 2X 12G OC",
+      "reference_board_power_W": 170.0,
+      "reference_board_envelope_mm": [
+        235,
+        124,
+        42
+      ],
+      "disclaimer": "Geometria autoral didatica; 170 W da placa inteira concentrados em uma fonte equivalente. Nao e uma replica nem validacao da GPU comercial."
+    },
+    "geometry_mm": {
+      "base_length": 180.0,
+      "base_width": 90.0,
+      "base_thickness": 6.0,
+      "fin_count": 20,
+      "fin_thickness": 1.0,
+      "fin_height": 20.0,
+      "fin_pitch": 3.5,
+      "copper_length": 40.0,
+      "copper_width": 40.0,
+      "copper_thickness": 3.0,
+      "source_length": 30.0,
+      "source_width": 30.0,
+      "tim_thickness": 0.1,
+      "mounting_hole_diameter": 3.2,
+      "mounting_hole_centres": [
+        [
+          10.0,
+          5.0
+        ],
+        [
+          170.0,
+          5.0
+        ],
+        [
+          10.0,
+          85.0
+        ],
+        [
+          170.0,
+          85.0
+        ]
+      ]
+    },
+    "materials": {
+      "aluminium": {
+        "designation": "Aluminium 6063-T6",
+        "k_W_mK": 201.0,
+        "rho_kg_m3": 2700.0,
+        "cp_J_kgK": 900.0,
+        "E_Pa": 69000000000.0,
+        "alpha_per_K": 2.34e-05,
+        "yield_Pa": 170000000.0,
+        "notes": "Hydro: k, expansao, densidade e escoamento; E e cp sao valores tipicos aproximados a temperatura ambiente, nao certificacao do lote."
+      },
+      "copper": {
+        "designation": "Copper C11000 (ETP)",
+        "k_W_mK": 391.0,
+        "rho_kg_m3": 8910.0,
+        "cp_J_kgK": 385.0,
+        "E_Pa": 117000000000.0,
+        "alpha_per_K": 1.692e-05,
+        "notes": "Valores arredondados e convertidos da ficha CDA C11000 a temperatura ambiente."
+      },
+      "tim": {
+        "designation": "Pasta termica ceramica generica",
+        "k_W_mK": 3.0,
+        "notes": "Hipotese didatica; requer ficha tecnica e medicao na aplicacao real."
+      }
+    },
+    "thermal": {
+      "power_W": 170.0,
+      "ambient_C": 25.0,
+      "initial_C": 25.0,
+      "design_limit_C": 85.0,
+      "h_W_m2K": 80.0,
+      "source_package_R_K_W": 0.1,
+      "source_package_C_J_K": 3.5,
+      "source_contact_R_K_W": 0.02,
+      "copper_aluminium_contact_r_m2K_W": 2e-05,
+      "duration_s": 600.0,
+      "step_s": 0.5,
+      "export_interval_s": 2.0,
+      "grid_mm": [
+        3.0,
+        1.5,
+        0.75
+      ],
+      "sensitivity_h_W_m2K": [
+        20.0,
+        40.0,
+        60.0,
+        80.0,
+        100.0
+      ],
+      "sensitivity_power_W": [
+        100.0,
+        140.0,
+        170.0,
+        200.0
+      ],
+      "sensitivity_ambient_C": [
+        25.0,
+        35.0
+      ],
+      "notes": "h, resistencia interna do encapsulamento, capacitancia equivalente e contatos sao hipoteses nao calibradas. Limite de 85 C e meta de projeto, nao limite oficial do fabricante. Sem heat pipes, CFD ou simulacao de memoria/VRM. O solver espacial representa a base em 2D com aletas por eficiencia analitica; furos podem ser desprezados no solver com erro geometrico explicitado."
+    },
+    "environmental": {
+      "hours_per_year": 8760.0,
+      "grid_factor_kgCO2e_kWh": 0.1,
+      "grid_factor_sensitivity_kgCO2e_kWh": [
+        0.05,
+        0.1,
+        0.5
+      ],
+      "alternative_power_W": 140.0,
+      "years": 5,
+      "aluminium_price_R_per_kg": 30.0,
+      "copper_price_R_per_kg": 100.0,
+      "notes": "Fatores de emissao e precos sao cenarios ilustrativos, nao cotacao nem inventario oficial brasileiro. Consumo da placa somente; 170 W ja e valor da placa, sem somar ventoinhas novamente. Impactos incorporados discutidos qualitativamente, sem alegar ACV completa."
+    },
+    "sources": {
+      "gpu": "https://storage-asset.msi.com/datasheet/vga/global/GeForce-RTX-3060-VENTUS-2X-12G-OC.pdf",
+      "aluminium": "https://www.hydro.com/globalassets/01-products--services/extruded-profiles/americas/ena-resources/alloy-data-sheets/hydro_2026_data_sheet_6063-rev-062026.pdf",
+      "copper": "https://alloys.copper.org/alloy/C11000",
+      "energy2d": "https://energy.concord.org/energy2d/",
+      "freecad": "https://www.freecad.org/",
+      "colab": "https://colab.research.google.com/"
+    }
+  },
+  "model": {
+    "grid_mm": 1.5,
+    "grid_shape": [
+      60,
+      120
+    ],
+    "unknowns": 7202,
+    "h_W_m2K": 80.0,
+    "fin_efficiency": 0.9016328228499755,
+    "fin_area_m2": 0.14760000000000012,
+    "bare_area_m2": 0.015839999999999996,
+    "effective_area_m2": 0.1489210046526565,
+    "global_convection_W_K": 11.913680372212522,
+    "source_to_copper_R_K_W": 0.16129961163209244,
+    "tim_R_K_W": 0.037037037037037035,
+    "copper_to_base_area_resistance_m2K_W": 3.8761690269878234e-05,
+    "aluminium_mass_without_holes_kg": 0.45684000000000013,
+    "copper_mass_kg": 0.04276800000000001,
+    "omitted_hole_volume_m3": 1.930194526365569e-07,
+    "fin_transverse_Biot": 0.0001990049751243781,
+    "copper_contact_area_m2": 0.0016000000000000005
+  },
+  "equilibrium": {
+    "source_C": 83.68108221123153,
+    "copper_C": 56.26014823377582,
+    "base_max_C": 54.27231532688391,
+    "base_min_C": 31.903632372177675,
+    "base_mean_C": 39.05449798510305,
+    "aluminium_volume_mean_C": 38.59056849421773,
+    "heat_out_W": 169.99999999997453,
+    "energy_residual_W": 2.546585164964199e-11,
+    "effective_source_to_ambient_R_K_W": 0.34518283653665605
+  },
+  "transient": {
+    "dt_s": 0.5,
+    "grid_mm": 1.5,
+    "duration_s": 600.0,
+    "max_step_energy_residual_W": 5.589107299940272e-11,
+    "cumulative_energy_residual_J": 2.848173608072102e-08,
+    "stored_energy_J": 6555.407849898209,
+    "rejected_energy_J": 95444.59215007331,
+    "final_source_C": 83.68108091282312
+  },
+  "mesh_convergence": [
+    {
+      "grid_mm": 3.0,
+      "unknowns": 1802,
+      "source_C": 83.62016124963472,
+      "copper_C": 56.19922727217901,
+      "base_max_C": 54.14052135822624,
+      "base_min_C": 31.899139507526158,
+      "base_mean_C": 39.05435753141394,
+      "aluminium_volume_mean_C": 38.590372667262095,
+      "heat_out_W": 170.00000000000477,
+      "energy_residual_W": -4.774847184307873e-12,
+      "effective_source_to_ambient_R_K_W": 0.34482447793902776
+    },
+    {
+      "grid_mm": 1.5,
+      "unknowns": 7202,
+      "source_C": 83.68108221123153,
+      "copper_C": 56.26014823377582,
+      "base_max_C": 54.27231532688391,
+      "base_min_C": 31.903632372177675,
+      "base_mean_C": 39.05449798510305,
+      "aluminium_volume_mean_C": 38.59056849421773,
+      "heat_out_W": 169.99999999997453,
+      "energy_residual_W": 2.546585164964199e-11,
+      "effective_source_to_ambient_R_K_W": 0.34518283653665605
+    },
+    {
+      "grid_mm": 0.75,
+      "unknowns": 28802,
+      "source_C": 83.7027279628989,
+      "copper_C": 56.281793985443194,
+      "base_max_C": 54.292967922679466,
+      "base_min_C": 31.899011203175068,
+      "base_mean_C": 39.05569872757632,
+      "aluminium_volume_mean_C": 38.59121165015699,
+      "heat_out_W": 169.99999999993835,
+      "energy_residual_W": 6.164668775454629e-11,
+      "effective_source_to_ambient_R_K_W": 0.3453101644876407
+    }
+  ],
+  "timestep_convergence": [
+    {
+      "dt_s": 1.0,
+      "source_at_10s_C": 66.28493389181483,
+      "source_at_60s_C": 80.31344600428653,
+      "final_source_C": 83.68108076164546
+    },
+    {
+      "dt_s": 0.5,
+      "source_at_10s_C": 66.44447611127711,
+      "source_at_60s_C": 80.35678566639072,
+      "final_source_C": 83.68108091282312
+    },
+    {
+      "dt_s": 0.25,
+      "source_at_10s_C": 66.52404841292861,
+      "source_at_60s_C": 80.37843855755878,
+      "final_source_C": 83.68108098331629
+    }
+  ],
+  "air_CoolProp": {
+    "density_kg_m3": 1.1843184839089664,
+    "viscosity_Pa_s": 1.8448082162002025e-05,
+    "k_W_mK": 0.026246931318905948,
+    "cp_J_kgK": 1006.308142514125,
+    "assumed_context_velocity_m_s": 2.0,
+    "Re_over_180mm_at_assumed_2m_s": 23111.055689322613
+  },
+  "mesh_selected_vs_finest_source_difference_K": 0.021645751667378477,
+  "end_vs_steady_source_difference_K": 1.2984084065692514e-06,
+  "meets_adopted_85C_goal": true,
+  "provenance": "Python execution; no commercial GPU validation. Colab-compatible notebook executed locally, not authenticated Google runtime."
+}

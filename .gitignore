@@ -1,0 +1,22 @@
+# Ambientes e arquivos gerados localmente
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+node_modules/
+dist/
+coverage/
+energy2d.jar
+
+# Credenciais e configuração privada
+.env
+.env.*
+!.env.example
+
+# Bloqueios e cópias temporárias dos editores
+.~lock.*#
+~$*
+*.FCBak
+.DS_Store
+Thumbs.db

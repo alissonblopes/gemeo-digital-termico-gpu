@@ -1,0 +1,70 @@
+{
+  "provenance": "Calculated from parameters.json; dimensions in mm converted explicitly to SI. No measured data.",
+  "geometry": {
+    "aluminium_volume_mm3": 169006.98054736343,
+    "copper_volume_mm3": 4800.0,
+    "hole_volume_mm3": 193.0194526365569,
+    "metal_envelope_mm": [
+      180.0,
+      90.0,
+      29.0
+    ],
+    "fin_array_width_mm": 67.5,
+    "fin_side_margin_mm": 11.25,
+    "aluminium_mass_kg": 0.45631884747788126,
+    "copper_mass_kg": 0.04276800000000001,
+    "total_metal_mass_kg": 0.4990868474778813,
+    "all_aluminium_same_geometry_mass_kg": 0.4692788474778813,
+    "all_copper_same_geometry_mass_kg": 1.5486201966770083
+  },
+  "cost_scenario": {
+    "hybrid_raw_material_R": 17.966365424336438,
+    "all_aluminium_raw_material_R": 14.07836542433644,
+    "all_copper_raw_material_R": 154.86201966770082,
+    "caveat": "Illustrative prices in parameters, not supplier quotes. Same geometry, no manufacturing or hardware costs; no full-copper thermal simulation implied."
+  },
+  "interface": {
+    "tim_area_m2": 0.0009,
+    "tim_resistance_K_W": 0.037037037037037035,
+    "tim_drop_at_nominal_power_K": 6.296296296296296
+  },
+  "mechanical_screening": {
+    "uniform_delta_T_K": 60.0,
+    "fixing_span_mm": 160.0,
+    "aluminium_free_expansion_over_fixing_span_mm": 0.22464,
+    "copper_free_expansion_over_40mm_mm": 0.040608,
+    "aluminium_copper_mismatch_over_40mm_mm": 0.015551999999999998,
+    "aluminium_fully_restrained_uniaxial_stress_MPa": 96.876,
+    "copper_fully_restrained_uniaxial_stress_MPa": 118.7784,
+    "aluminium_yield_screening_factor": 1.7548205954003055,
+    "adopted_screening_target_factor": 2.0,
+    "delta_T_limit_for_factor_two_K": 52.64461786200916,
+    "caveat": "Uniform60K heating and fully restrained uniaxial linear elasticity are hypothetical screens, not computed fastener/solder stresses or certified safety factors. Free expansion gives zero stress. Geometry alone does not define joint restraint. No cycle-to-failure prediction."
+  },
+  "operating_environment_scenario": {
+    "nominal_annual_kWh": 1489.2,
+    "alternative_annual_kWh": 1226.4,
+    "annual_saving_kWh": 262.79999999999995,
+    "annual_saving_percent": 17.647058823529406,
+    "nominal_annual_kgCO2e": 148.92000000000002,
+    "alternative_annual_kgCO2e": 122.64000000000001,
+    "annual_saving_kgCO2e": 26.279999999999998,
+    "five_year_nominal_kWh": 7446.0,
+    "five_year_saving_kgCO2e": 131.39999999999998,
+    "carbon_factor_sensitivity": [
+      {
+        "factor_kgCO2e_kWh": 0.05,
+        "annual_nominal_kgCO2e": 74.46000000000001
+      },
+      {
+        "factor_kgCO2e_kWh": 0.1,
+        "annual_nominal_kgCO2e": 148.92000000000002
+      },
+      {
+        "factor_kgCO2e_kWh": 0.5,
+        "annual_nominal_kgCO2e": 744.6
+      }
+    ],
+    "caveat": "Continuous nominal board-power operation, not measured inference. Illustrative grid factor, board only; no PUE estimate, no double-counting of fans, no full LCA. Throughput impact of power cap not established."
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "FreeCAD_version": [
+    "1",
+    "1",
+    "4",
+    "20260928 (Git shallow)",
+    "Unknown",
+    "2026/09/28 13:46:34",
+    "(HEAD detached at 4fd3bf320)",
+    "4fd3bf320d9566a27e60069fc8387448aaa3a094"
+  ],
+  "aluminium_valid": true,
+  "copper_valid": true,
+  "aluminium_solids": 1,
+  "copper_solids": 1,
+  "aluminium_volume_mm3": 169006.9805473634,
+  "copper_volume_mm3": 4799.999999999999,
+  "bounds_mm": [
+    180.0,
+    90.0,
+    29.0
+  ],
+  "native_reopen_passed": true,
+  "fin_height_change_20_to_21mm_passed": true,
+  "changed_aluminium_volume_mm3": 172606.98054736352,
+  "limitations": "Geometria autoral, sem PCB/ventoinhas/heat pipes. Vinte objetos de aleta: alterar numero requer regenerar macro; dimensoes/passo/material sao editaveis. Fixacao, tolerancias e resistencia mecanica nao liberadas para fabricacao. TIM e fonte sao condicoes termicas, nao solidos do conjunto metalico.",
+  "native_view_metadata_persisted": true,
+  "visible_finished_objects": [
+    "AluminiumHeatsink",
+    "CopperSpreader"
+  ],
+  "gui_visual_limit": "Native geometry and saved view metadata verified; full GUI could not initialize GLX on this host. Report image is rendered from actual BRep tessellation."
+}

@@ -1,0 +1,154 @@
+"""Run in FreeCAD1.1+: Macro > Macros > Execute. No external Python proxy is saved.
+All dimensions originate from ../parameters.json. Native boxes, fusion and cuts
+remain editable through the Parameters spreadsheet after reopening the FCStd.
+"""
+import json
+import math
+import os
+from pathlib import Path
+import FreeCAD as App
+import Part
+import TechDraw
+
+ROOT = Path(os.environ["THERMAL_STUDY_ROOT"]) if "THERMAL_STUDY_ROOT" in os.environ else Path(__file__).resolve().parents[1]
+p = json.loads((ROOT / "parameters.json").read_text(encoding="utf-8"))
+g = p["geometry_mm"]
+for directory in ["cad", "drawings", "figures"]:
+    (ROOT / directory).mkdir(parents=True, exist_ok=True)
+doc = App.newDocument("GPUHeatsink")
+doc.Label = "Dissipador didático de GPU — Nicolas Melo"
+sheet = doc.addObject("Spreadsheet::Sheet", "Parameters")
+aliases = {"Length": "base_length", "Width": "base_width", "BaseThickness": "base_thickness", "FinThickness": "fin_thickness", "FinHeight": "fin_height", "FinPitch": "fin_pitch", "CopperLength": "copper_length", "CopperWidth": "copper_width", "CopperThickness": "copper_thickness", "HoleDiameter": "mounting_hole_diameter"}
+for row, (alias, key) in enumerate(aliases.items(), 1):
+    sheet.set(f"A{row}", alias)
+    sheet.set(f"B{row}", f"{g[key]} mm")
+    sheet.setAlias(f"B{row}", alias)
+sheet.set("A12", "FinCount (regenerate macro to change count)")
+sheet.set("B12", str(g["fin_count"]))
+sheet.setAlias("B12", "FinCount")
+sheet.setColumnWidth("A", 260)
+sheet.setColumnWidth("B", 100)
+
+
+def box(name, dimensions):
+    obj = doc.addObject("Part::Box", name)
+    for prop, expression in zip(["Length", "Width", "Height"], dimensions):
+        obj.setExpression(prop, expression)
+    return obj
+
+
+base = box("AluminiumBase", ["Parameters.Length", "Parameters.Width", "Parameters.BaseThickness"])
+fins = []
+for i in range(g["fin_count"]):
+    fin = box(f"Fin{i + 1:02}", ["Parameters.Length", "Parameters.FinThickness", "Parameters.FinHeight"])
+    fin.setExpression("Placement.Base.y", f"(Parameters.Width-((Parameters.FinCount-1)*Parameters.FinPitch+Parameters.FinThickness))/2+{i}*Parameters.FinPitch")
+    fin.setExpression("Placement.Base.z", "Parameters.BaseThickness")
+    fins.append(fin)
+extrusion = doc.addObject("Part::MultiFuse", "AluminiumExtrusion")
+extrusion.Shapes = [base] + fins
+extrusion.Refine = True
+holes = []
+for i, (x, y) in enumerate(g["mounting_hole_centres"]):
+    hole = doc.addObject("Part::Cylinder", f"MountingHole{i + 1}")
+    hole.setExpression("Radius", "Parameters.HoleDiameter/2")
+    hole.setExpression("Height", "Parameters.BaseThickness")
+    hole.setExpression("Placement.Base.x", "Parameters.Length-10 mm" if x > g["base_length"] / 2 else "10 mm")
+    hole.setExpression("Placement.Base.y", "Parameters.Width-5 mm" if y > g["base_width"] / 2 else "5 mm")
+    holes.append(hole)
+hole_tool = doc.addObject("Part::MultiFuse", "HoleTools")
+hole_tool.Shapes = holes
+aluminium = doc.addObject("Part::Cut", "AluminiumHeatsink")
+aluminium.Base, aluminium.Tool, aluminium.Refine = extrusion, hole_tool, True
+aluminium.Label = "Alumínio6063-T6 — corpo e20aletas"
+copper = box("CopperSpreader", ["Parameters.CopperLength", "Parameters.CopperWidth", "Parameters.CopperThickness"])
+copper.setExpression("Placement.Base.x", "(Parameters.Length-Parameters.CopperLength)/2")
+copper.setExpression("Placement.Base.y", "(Parameters.Width-Parameters.CopperWidth)/2")
+copper.setExpression("Placement.Base.z", "-Parameters.CopperThickness")
+copper.Label = "CobreC11000 — base de contato"
+assembly = doc.addObject("Part::Compound", "MetalAssembly")
+assembly.Links = [aluminium, copper]
+assembly.Label = "Conjunto metálico180x90x29mm"
+doc.recompute()
+for obj in doc.Objects:
+    if obj.ViewObject:
+        obj.ViewObject.Visibility = obj in [aluminium, copper]
+if App.GuiUp:
+    aluminium.ViewObject.ShapeColor = (0.76, 0.8, 0.85)
+    copper.ViewObject.ShapeColor = (0.84, 0.43, 0.19)
+    aluminium.ViewObject.LineColor = (0.18, 0.2, 0.24)
+    copper.ViewObject.LineColor = (0.3, 0.16, 0.07)
+
+expected_al = g["base_length"] * g["base_width"] * g["base_thickness"] + g["fin_count"] * g["base_length"] * g["fin_thickness"] * g["fin_height"] - len(holes) * math.pi * (g["mounting_hole_diameter"] / 2) ** 2 * g["base_thickness"]
+assert aluminium.Shape.isValid() and copper.Shape.isValid()
+assert len(aluminium.Shape.Solids) == 1 and len(copper.Shape.Solids) == 1
+assert abs(aluminium.Shape.Volume - expected_al) < 1e-5
+assert abs(assembly.Shape.BoundBox.ZLength - 29) < 1e-8
+native_file = ROOT / "cad" / "heatsink.FCStd"
+doc.recompute()
+doc.saveAs(str(native_file))
+Part.export([aluminium, copper], str(ROOT / "cad" / "heatsink.step"))
+for name, direction in [("top", (0, 0, 1)), ("front", (0, -1, 0)), ("right", (1, 0, 0)), ("isometric", (1, -1, 1))]:
+    svg = TechDraw.projectToSVG(assembly.Shape, App.Vector(*direction))
+    (ROOT / "cad" / f"projection_{name}.svg").write_text(svg, encoding="utf-8")
+
+# Reopen the persisted native file and exercise a native spreadsheet dependency.
+App.closeDocument(doc.Name)
+doc = App.openDocument(str(native_file))
+original_volume = doc.AluminiumHeatsink.Shape.Volume
+doc.Parameters.set("B5", "21 mm")
+doc.recompute()
+assert abs(doc.MetalAssembly.Shape.BoundBox.ZLength - 30) < 1e-8
+changed_volume = doc.AluminiumHeatsink.Shape.Volume
+assert changed_volume > original_volume
+doc.Parameters.set("B5", "20 mm")
+doc.recompute()
+assert abs(doc.AluminiumHeatsink.Shape.Volume - original_volume) < 1e-5
+metrics = {"FreeCAD_version": App.Version(), "aluminium_valid": doc.AluminiumHeatsink.Shape.isValid(), "copper_valid": doc.CopperSpreader.Shape.isValid(), "aluminium_solids": len(doc.AluminiumHeatsink.Shape.Solids), "copper_solids": len(doc.CopperSpreader.Shape.Solids), "aluminium_volume_mm3": doc.AluminiumHeatsink.Shape.Volume, "copper_volume_mm3": doc.CopperSpreader.Shape.Volume, "bounds_mm": [doc.MetalAssembly.Shape.BoundBox.XLength, doc.MetalAssembly.Shape.BoundBox.YLength, doc.MetalAssembly.Shape.BoundBox.ZLength], "native_reopen_passed": True, "fin_height_change_20_to_21mm_passed": True, "changed_aluminium_volume_mm3": changed_volume, "limitations": "Geometria autoral, sem PCB/ventoinhas/heat pipes. Vinte objetos de aleta: alterar numero requer regenerar macro; dimensoes/passo/material sao editaveis. Fixacao, tolerancias e resistencia mecanica nao liberadas para fabricacao. TIM e fonte sao condicoes termicas, nao solidos do conjunto metalico."}
+(ROOT / "cad" / "cad_metrics.json").write_text(json.dumps(metrics, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+print(json.dumps(metrics, ensure_ascii=False, indent=2))
+if App.GuiUp:
+    import FreeCADGui as Gui
+    from PySide import QtCore
+    Gui.activeDocument().activeView().viewAxonometric()
+    Gui.activeDocument().activeView().fitAll()
+    Gui.activeDocument().activeView().setAnimationEnabled(False) if hasattr(Gui.activeDocument().activeView(), "setAnimationEnabled") else None
+    def capture_and_close():
+        Gui.activeDocument().activeView().saveImage(str(ROOT / "figures" / "cad_freecad_view.png"), 1600, 1000, "White")
+        doc.save()
+        Gui.getMainWindow().close()
+    QtCore.QTimer.singleShot(1800, capture_and_close)
+
+# A headless FreeCAD save omits GuiDocument.xml. Persist the native, documented
+# view-provider XML shape (also used by FreeCAD's shipped FCStd examples), so
+# construction boxes and hole tools do not become visible when opened in the GUI.
+if not App.GuiUp:
+    from xml.etree import ElementTree as ET
+    from zipfile import ZipFile, ZIP_DEFLATED
+    import tempfile
+    gui = ET.Element("Document", SchemaVersion="1", HasExpansion="1")
+    providers = ET.SubElement(gui, "ViewProviderData", Count=str(len(doc.Objects)))
+    for obj in doc.Objects:
+        provider = ET.SubElement(providers, "ViewProvider", name=obj.Name, expanded="0", treeRank="-1")
+        properties = ET.SubElement(provider, "Properties", Count="1")
+        prop = ET.SubElement(properties, "Property", name="Visibility", type="App::PropertyBool", status="1")
+        ET.SubElement(prop, "Bool", value="true" if obj.Name in ["AluminiumHeatsink", "CopperSpreader"] else "false")
+    ET.SubElement(gui, "Camera", settings="OrthographicCamera {\n viewportMapping ADJUST_CAMERA\n position 234.337567 -99.337567 155.837567\n orientation 0.70710678 0.70710678 0 0.955316618\n nearDistance 1\n farDistance 1000\n aspectRatio 1\n focalDistance 250\n height 220\n}\n")
+    view_xml = ET.tostring(gui, encoding="utf-8", xml_declaration=True)
+    descriptor, temporary_name = tempfile.mkstemp(suffix=".FCStd", dir=str(native_file.parent))
+    os.close(descriptor)
+    with ZipFile(native_file) as original, ZipFile(temporary_name, "w", compression=ZIP_DEFLATED) as updated:
+        for member in original.infolist():
+            if member.filename != "GuiDocument.xml":
+                updated.writestr(member, original.read(member.filename))
+        updated.writestr("GuiDocument.xml", view_xml)
+    os.replace(temporary_name, native_file)
+    App.closeDocument(doc.Name)
+    reopened = App.openDocument(str(native_file))
+    assert reopened.AluminiumHeatsink.Shape.isValid() and reopened.CopperSpreader.Shape.isValid()
+    assert abs(reopened.MetalAssembly.Shape.BoundBox.ZLength - 29) < 1e-8
+    App.closeDocument(reopened.Name)
+    metrics["native_view_metadata_persisted"] = True
+    metrics["visible_finished_objects"] = ["AluminiumHeatsink", "CopperSpreader"]
+    metrics["gui_visual_limit"] = "Native geometry and saved view metadata verified; full GUI could not initialize GLX on this host. Report image is rendered from actual BRep tessellation."
+    (ROOT / "cad" / "cad_metrics.json").write_text(json.dumps(metrics, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print("Native GUI visibility persisted; reopened solids valid; full GUI renderer unavailable on this host.")
